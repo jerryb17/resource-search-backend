@@ -265,6 +265,27 @@ app.post("/api/search", (req, res) => {
   }
 });
 
+// Utility: wrap a promise with a timeout (ms)
+function withTimeout(promise, ms, label) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const message = `${label} timed out after ${ms} ms`;
+      console.error(message);
+      reject(new Error(message));
+    }, ms);
+
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
+
 // Recommend resources for a task
 app.post("/api/recommend", async (req, res) => {
   try {
@@ -298,8 +319,12 @@ app.post("/api/recommend", async (req, res) => {
     // Use AI if requested and available
     if (use_ai && aiService.geminiModel) {
       try {
-        console.log(`Using AI to analyze task: ${taskTitle}`);
-        const taskAnalysis = await aiService.analyzeTask(taskDesc, taskTitle);
+        console.log(`Using AI (Gemini) to analyze task: ${taskTitle}`);
+        const taskAnalysis = await withTimeout(
+          aiService.analyzeTask(taskDesc, taskTitle),
+          10000,
+          "Gemini analyzeTask (recommend)"
+        );
         console.log("AI Analysis:", taskAnalysis);
 
         // Use AI matching
@@ -323,13 +348,19 @@ app.post("/api/recommend", async (req, res) => {
           ai_powered: true,
         });
       } catch (aiError) {
-        console.error("AI analysis error:", aiError);
-        console.log("Falling back to NLP matching");
+        console.error("AI analysis error (recommend):", aiError);
+        console.log(
+          "Falling back to internal NLP matching for recommend endpoint"
+        );
         // Fall through to NLP matching
       }
+    } else if (use_ai && !aiService.geminiModel) {
+      console.log(
+        "Gemini model not configured; using internal NLP for recommend endpoint"
+      );
     }
 
-    // Fallback to lightweight NLP matching
+    // Fallback to lightweight NLP matching (internal system)
     const recommendations = nlpService.recommendForTask(
       taskDesc,
       taskTitle,
@@ -423,7 +454,11 @@ app.post("/api/analyze-task", async (req, res) => {
 
     if (use_ai && aiService.geminiModel) {
       try {
-        analysis = await aiService.analyzeTask(task_description, task_title);
+        analysis = await withTimeout(
+          aiService.analyzeTask(task_description, task_title),
+          10000,
+          "Gemini analyzeTask (analyze-task endpoint)"
+        );
         summary = aiService.generateTaskSummary(analysis);
         console.log("Answer provider: Gemini (analyze-task)");
       } catch (aiError) {
