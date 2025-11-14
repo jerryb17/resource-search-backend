@@ -10,6 +10,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { NLPService } from './nlpService.js';
+import { aiService } from './aiService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -253,14 +254,14 @@ app.post('/api/search', (req, res) => {
 });
 
 // Recommend resources for a task
-app.post('/api/recommend', (req, res) => {
+app.post('/api/recommend', async (req, res) => {
   try {
     const {
       task_description,
       task_title = '',
       task_id,
       top_k = 5,
-      use_ai = false
+      use_ai = true  // Default to true, will fallback to NLP if AI not available
     } = req.body;
     
     // If task_id provided, get task details
@@ -282,7 +283,37 @@ app.post('/api/recommend', (req, res) => {
       });
     }
     
-    // Use lightweight NLP matching (no AI needed for free tier)
+    // Use AI if requested and available
+    if (use_ai && aiService.geminiModel) {
+      try {
+        console.log(`🤖 Using AI to analyze task: ${taskTitle}`);
+        const taskAnalysis = await aiService.analyzeTask(taskDesc, taskTitle);
+        console.log(`✅ AI Analysis:`, taskAnalysis);
+        
+        // Use AI matching
+        const recommendations = aiService.matchResourcesToTask(taskAnalysis, resources);
+        const topRecommendations = recommendations.slice(0, top_k);
+        
+        // Add AI analysis to response
+        const analysisSummary = aiService.generateTaskSummary(taskAnalysis);
+        
+        return res.json({
+          success: true,
+          task: taskDesc,
+          task_analysis: taskAnalysis,
+          analysis_summary: analysisSummary,
+          count: topRecommendations.length,
+          recommendations: topRecommendations,
+          ai_powered: true
+        });
+      } catch (aiError) {
+        console.error('❌ AI analysis error:', aiError);
+        console.log('💡 Falling back to NLP matching');
+        // Fall through to NLP matching
+      }
+    }
+    
+    // Fallback to lightweight NLP matching
     const recommendations = nlpService.recommendForTask(
       taskDesc,
       taskTitle,
@@ -355,10 +386,10 @@ app.get('/api/stats', (req, res) => {
   }
 });
 
-// Analyze task (lightweight version)
-app.post('/api/analyze-task', (req, res) => {
+// Analyze task (AI-powered or lightweight version)
+app.post('/api/analyze-task', async (req, res) => {
   try {
-    const { task_description, task_title = '' } = req.body;
+    const { task_description, task_title = '', use_ai = true } = req.body;
     
     if (!task_description) {
       return res.status(400).json({
@@ -367,13 +398,29 @@ app.post('/api/analyze-task', (req, res) => {
       });
     }
     
-    const analysis = nlpService.analyzeTask(task_description, task_title);
-    const summary = nlpService.generateTaskSummary(task_description, task_title);
+    // Use AI if available, otherwise use NLP fallback
+    let analysis;
+    let summary;
+    
+    if (use_ai && aiService.geminiModel) {
+      try {
+        analysis = await aiService.analyzeTask(task_description, task_title);
+        summary = aiService.generateTaskSummary(analysis);
+      } catch (aiError) {
+        console.error('AI analysis error, using fallback:', aiError);
+        analysis = nlpService.analyzeTask(task_description, task_title);
+        summary = nlpService.generateTaskSummary(task_description, task_title);
+      }
+    } else {
+      analysis = nlpService.analyzeTask(task_description, task_title);
+      summary = nlpService.generateTaskSummary(task_description, task_title);
+    }
     
     res.json({
       success: true,
       analysis,
-      summary
+      summary,
+      ai_powered: use_ai && aiService.geminiModel !== null
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -387,6 +434,8 @@ app.listen(PORT, () => {
   console.log('='.repeat(60));
   console.log(`📊 Loaded ${resources.length} resources`);
   console.log(`📋 Loaded ${tasks.length} tasks`);
+  console.log('🤖 AI Service Status:');
+  console.log(`   - Gemini: ${aiService.geminiModel ? '✅ Ready' : '❌ Not configured (using NLP fallback)'}`);
   console.log(`🌐 Server running on port ${PORT}`);
   console.log('='.repeat(60));
 });

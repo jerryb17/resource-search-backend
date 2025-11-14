@@ -349,7 +349,8 @@ export class NLPService {
       const skillNormalized = this.normalizeSkill(skill);
       return taskSkills.some(taskSkill => {
         const taskSkillNormalized = this.normalizeSkill(taskSkill);
-        return [...skillNormalized].some(alias => [...taskSkillNormalized].has(alias));
+        // Check if any alias from skillNormalized exists in taskSkillNormalized Set
+        return [...skillNormalized].some(alias => taskSkillNormalized.has(alias));
       });
     });
     
