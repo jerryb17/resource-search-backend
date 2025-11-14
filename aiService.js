@@ -26,11 +26,9 @@ class AIService {
           console.error("Error initializing Gemini:", error.message);
           this.geminiModel = null;
         }
-        } else {
-          this.geminiModel = null;
-          console.log(
-            "Gemini API key not configured - using fallback analysis"
-          );
+      } else {
+        this.geminiModel = null;
+        console.log("Gemini API key not configured - using fallback analysis");
       }
     }
   }
