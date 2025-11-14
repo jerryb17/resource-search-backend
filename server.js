@@ -33,10 +33,10 @@ try {
   resources = JSON.parse(readFileSync(resourcesPath, 'utf8'));
   tasks = JSON.parse(readFileSync(tasksPath, 'utf8'));
   
-  console.log(`✅ Loaded ${resources.length} resources and ${tasks.length} tasks`);
+  console.log(`Loaded ${resources.length} resources and ${tasks.length} tasks`);
 } catch (error) {
-  console.error('❌ Error loading data files:', error.message);
-  console.log('⚠️  Starting with empty data arrays');
+  console.error('Error loading data files:', error.message);
+  console.log('Starting with empty data arrays');
 }
 
 // Initialize NLP service
@@ -286,9 +286,9 @@ app.post('/api/recommend', async (req, res) => {
     // Use AI if requested and available
     if (use_ai && aiService.geminiModel) {
       try {
-        console.log(`🤖 Using AI to analyze task: ${taskTitle}`);
+        console.log(`Using AI to analyze task: ${taskTitle}`);
         const taskAnalysis = await aiService.analyzeTask(taskDesc, taskTitle);
-        console.log(`✅ AI Analysis:`, taskAnalysis);
+        console.log('AI Analysis:', taskAnalysis);
         
         // Use AI matching
         const recommendations = aiService.matchResourcesToTask(taskAnalysis, resources);
@@ -307,8 +307,8 @@ app.post('/api/recommend', async (req, res) => {
           ai_powered: true
         });
       } catch (aiError) {
-        console.error('❌ AI analysis error:', aiError);
-        console.log('💡 Falling back to NLP matching');
+        console.error('AI analysis error:', aiError);
+        console.log('Falling back to NLP matching');
         // Fall through to NLP matching
       }
     }
@@ -430,13 +430,13 @@ app.post('/api/analyze-task', async (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log('='.repeat(60));
-  console.log('🚀 Resource Search Backend Server');
+  console.log('Resource Search Backend Server');
   console.log('='.repeat(60));
-  console.log(`📊 Loaded ${resources.length} resources`);
-  console.log(`📋 Loaded ${tasks.length} tasks`);
-  console.log('🤖 AI Service Status:');
-  console.log(`   - Gemini: ${aiService.geminiModel ? '✅ Ready' : '❌ Not configured (using NLP fallback)'}`);
-  console.log(`🌐 Server running on port ${PORT}`);
+  console.log(`Loaded ${resources.length} resources`);
+  console.log(`Loaded ${tasks.length} tasks`);
+  console.log('AI Service Status:');
+  console.log(`   - Gemini: ${aiService.geminiModel ? 'Ready' : 'Not configured (using NLP fallback)'}`);
+  console.log(`Server running on port ${PORT}`);
   console.log('='.repeat(60));
 });
 

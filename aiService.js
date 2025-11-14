@@ -21,16 +21,16 @@ class AIService {
           this.geminiModel = genAI.getGenerativeModel({
             model: "gemini-2.0-flash",
           });
-          console.log("✅ Gemini AI initialized (using gemini-2.0-flash)");
+          console.log("Gemini AI initialized (using gemini-2.0-flash)");
         } catch (error) {
-          console.error("❌ Error initializing Gemini:", error.message);
+          console.error("Error initializing Gemini:", error.message);
           this.geminiModel = null;
         }
-      } else {
-        this.geminiModel = null;
-        console.log(
-          "⚠️  Gemini API key not configured - using fallback analysis"
-        );
+        } else {
+          this.geminiModel = null;
+          console.log(
+            "Gemini API key not configured - using fallback analysis"
+          );
       }
     }
   }
@@ -166,8 +166,8 @@ Return ONLY valid JSON, no other text.`;
         return this._fallbackAnalysis(taskDescription, taskTitle);
       }
     } catch (error) {
-      console.error("❌ AI analysis error:", error.message);
-      console.log("💡 Falling back to keyword-based analysis");
+      console.error("AI analysis error:", error.message);
+      console.log("Falling back to keyword-based analysis");
       return this._fallbackAnalysis(taskDescription, taskTitle);
     }
   }
