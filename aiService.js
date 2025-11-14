@@ -370,7 +370,7 @@ Return ONLY valid JSON, no other text.`;
           } else {
             // Has ALL required skills - high score!
             score += 60;
-            reasons.push(`✅ Has ALL ${matchedSkills.length} required skills`);
+            reasons.push(`Has ALL ${matchedSkills.length} required skills`);
           }
         } else {
           // OR logic: any matching skill is good

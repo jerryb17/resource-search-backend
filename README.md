@@ -4,11 +4,11 @@ A lightweight Node.js backend for NLP-based resource search, optimized for Rende
 
 ## Features
 
-- ✅ **Lightweight NLP**: No heavy ML models - uses efficient text matching algorithms
-- ✅ **Low Memory Usage**: Optimized for 0.5GB RAM on Render free tier
-- ✅ **Fast Performance**: Simple scoring algorithms for quick responses
-- ✅ **RESTful API**: Clean API endpoints compatible with existing frontend
-- ✅ **CORS Enabled**: Ready for frontend integration
+- **Lightweight NLP**: No heavy ML models - uses efficient text matching algorithms
+- **Low Memory Usage**: Optimized for 0.5GB RAM on Render free tier
+- **Fast Performance**: Simple scoring algorithms for quick responses
+- **RESTful API**: Clean API endpoints compatible with existing frontend
+- **CORS Enabled**: Ready for frontend integration
 
 ## Tech Stack
 
