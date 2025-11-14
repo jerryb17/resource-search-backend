@@ -1,0 +1,107 @@
+[
+  {
+    "id": 1,
+    "title": "Build Customer Dashboard",
+    "description": "Create a real-time analytics dashboard for customer insights with React and D3.js",
+    "priority": "high",
+    "status": "pending",
+    "required_skills": ["React", "TypeScript", "D3.js", "API Integration"],
+    "estimated_hours": 80,
+    "deadline": "2025-12-01",
+    "assigned_resource": null,
+    "department": "Engineering",
+    "complexity": "high"
+  },
+  {
+    "id": 2,
+    "title": "Optimize Database Queries",
+    "description": "Improve performance of slow-running PostgreSQL queries in the analytics module",
+    "priority": "high",
+    "status": "assigned",
+    "required_skills": ["PostgreSQL", "SQL", "Performance Optimization", "Python"],
+    "estimated_hours": 40,
+    "deadline": "2025-11-20",
+    "assigned_resource": 3,
+    "department": "Engineering",
+    "complexity": "medium"
+  },
+  {
+    "id": 3,
+    "title": "Mobile App Push Notifications",
+    "description": "Implement push notification system for iOS and Android apps",
+    "priority": "medium",
+    "status": "pending",
+    "required_skills": ["React Native", "Firebase", "iOS", "Android"],
+    "estimated_hours": 60,
+    "deadline": "2025-11-30",
+    "assigned_resource": null,
+    "department": "Engineering",
+    "complexity": "medium"
+  },
+  {
+    "id": 4,
+    "title": "Setup Kubernetes Cluster",
+    "description": "Migrate existing services to Kubernetes for better scalability",
+    "priority": "high",
+    "status": "pending",
+    "required_skills": ["Kubernetes", "Docker", "AWS", "DevOps"],
+    "estimated_hours": 100,
+    "deadline": "2025-12-15",
+    "assigned_resource": null,
+    "department": "DevOps",
+    "complexity": "high"
+  },
+  {
+    "id": 5,
+    "title": "API Rate Limiting Implementation",
+    "description": "Add rate limiting to prevent API abuse and ensure fair usage",
+    "priority": "medium",
+    "status": "pending",
+    "required_skills": ["Node.js", "Redis", "API Design", "Backend"],
+    "estimated_hours": 30,
+    "deadline": "2025-11-25",
+    "assigned_resource": null,
+    "department": "Engineering",
+    "complexity": "low"
+  },
+  {
+    "id": 6,
+    "title": "Redesign Landing Page",
+    "description": "Modernize company landing page with new branding and animations",
+    "priority": "low",
+    "status": "pending",
+    "required_skills": ["React", "CSS3", "UI/UX", "Animation"],
+    "estimated_hours": 50,
+    "deadline": "2025-12-10",
+    "assigned_resource": null,
+    "department": "Engineering",
+    "complexity": "low"
+  },
+  {
+    "id": 7,
+    "title": "Implement Microservices Communication",
+    "description": "Design and implement inter-service communication using message queues",
+    "priority": "high",
+    "status": "pending",
+    "required_skills": ["Microservices", "RabbitMQ", "Python", "System Design"],
+    "estimated_hours": 120,
+    "deadline": "2026-01-15",
+    "assigned_resource": null,
+    "department": "Engineering",
+    "complexity": "high"
+  },
+  {
+    "id": 8,
+    "title": "Security Audit and Fixes",
+    "description": "Conduct security audit and fix identified vulnerabilities",
+    "priority": "critical",
+    "status": "pending",
+    "required_skills": ["Security", "Python", "Node.js", "DevOps"],
+    "estimated_hours": 70,
+    "deadline": "2025-11-18",
+    "assigned_resource": null,
+    "department": "Security",
+    "complexity": "high"
+  }
+]
+
