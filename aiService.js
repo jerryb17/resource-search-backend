@@ -158,6 +158,54 @@ Return ONLY valid JSON, no other text.`;
         }
 
         const parsed = JSON.parse(resultText);
+
+        // Normalize skill arrays
+        parsed.required_skills = Array.isArray(parsed.required_skills)
+          ? parsed.required_skills
+          : [];
+        parsed.related_skills = Array.isArray(parsed.related_skills)
+          ? parsed.related_skills
+          : [];
+
+        // If Gemini put backend skills only in related_skills (e.g. for "Backend engineer"),
+        // promote a subset of those into required_skills so matching and UI can use them.
+        if (
+          parsed.required_skills.length === 0 &&
+          parsed.related_skills.length > 0
+        ) {
+          const backendKeywords = [
+            "java",
+            "python",
+            "node.js",
+            "nodejs",
+            "node",
+            ".net",
+            "c#",
+            "sql",
+            "databases",
+            "database",
+            "apis",
+            "api",
+            "microservices",
+            "cloud",
+            "aws",
+            "azure",
+            "gcp",
+          ];
+
+          const promoted = parsed.related_skills.filter((skill) =>
+            backendKeywords.includes(String(skill).toLowerCase())
+          );
+
+          parsed.required_skills =
+            promoted.length > 0 ? promoted : parsed.related_skills.slice(0, 5);
+
+          // For promoted skills, default to OR behaviour so we don't over-filter
+          if (typeof parsed.all_skills_required !== "boolean") {
+            parsed.all_skills_required = false;
+          }
+        }
+
         return parsed;
       } else {
         // No AI available, use simple keyword extraction
@@ -271,14 +319,16 @@ Return ONLY valid JSON, no other text.`;
       s.toLowerCase()
     );
 
+    let allSkillsRequired = taskAnalysis.all_skills_required || false;
+
     // Fallback: if AI did not return required_skills but did return related_skills,
     // treat a subset of related_skills as required so we can still rank meaningfully.
+    // In this fallback we use OR-logic (allSkillsRequired = false) so we don't over-filter.
     if (requiredSkills.length === 0 && relatedSkills.length > 0) {
       // Use top 5 related skills as pseudo-required
       requiredSkills = relatedSkills.slice(0, 5);
+      allSkillsRequired = false;
     }
-
-    const allSkillsRequired = taskAnalysis.all_skills_required || false;
     const complexity = taskAnalysis.complexity || "medium";
 
     // Skill relationship mapping for fuzzy matching
