@@ -104,6 +104,50 @@ app.get("/api/resources/:id", (req, res) => {
   }
 });
 
+// Adjust resource workload directly (manual allocation)
+app.post("/api/resources/:id/workload", (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { added_hours } = req.body;
+
+    if (typeof added_hours !== "number" || isNaN(added_hours)) {
+      return res.status(400).json({
+        success: false,
+        error: "added_hours must be a valid number",
+      });
+    }
+
+    const resource = resources.find((r) => r.id === id);
+    if (!resource) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Resource not found" });
+    }
+
+    // Use same assumption as task assignment: 40 hours = 100% workload
+    const hoursPerWeek = 40;
+    const workloadIncrease = (added_hours / hoursPerWeek) * 100;
+
+    resource.current_workload = Math.min(
+      resource.current_workload + workloadIncrease,
+      100
+    );
+    resource.current_workload = Math.round(resource.current_workload * 10) / 10;
+
+    // Update availability based on workload
+    resource.availability =
+      resource.current_workload >= 80 ? "busy" : "available";
+
+    return res.json({
+      success: true,
+      resource,
+      message: `Workload updated to ${resource.current_workload}% for ${resource.name}`,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Get all tasks with optional filtering
 app.get("/api/tasks", (req, res) => {
   try {
