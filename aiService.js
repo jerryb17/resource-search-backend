@@ -201,9 +201,18 @@ Return ONLY valid JSON, no other text.`;
             promoted.length > 0 ? promoted : parsed.related_skills.slice(0, 5);
 
           // For promoted skills, default to OR behaviour so we don't over-filter
-          if (typeof parsed.all_skills_required !== "boolean") {
-            parsed.all_skills_required = false;
-          }
+          parsed.all_skills_required = false;
+        }
+
+        const originalText = `${taskTitle} ${taskDescription}`.toLowerCase();
+        const hasExplicitAndOr =
+          originalText.includes(" and ") ||
+          originalText.includes(" & ") ||
+          originalText.includes(",") ||
+          originalText.includes(" or ");
+
+        if (!hasExplicitAndOr) {
+          parsed.all_skills_required = false;
         }
 
         return parsed;
