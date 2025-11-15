@@ -264,13 +264,21 @@ Return ONLY valid JSON, no other text.`;
    * Returns resources ranked by suitability
    */
   matchResourcesToTask(taskAnalysis, resources) {
-    const requiredSkills = (taskAnalysis.required_skills || []).map((s) =>
+    let requiredSkills = (taskAnalysis.required_skills || []).map((s) =>
       s.toLowerCase()
     );
-    const allSkillsRequired = taskAnalysis.all_skills_required || false;
     const relatedSkills = (taskAnalysis.related_skills || []).map((s) =>
       s.toLowerCase()
     );
+
+    // Fallback: if AI did not return required_skills but did return related_skills,
+    // treat a subset of related_skills as required so we can still rank meaningfully.
+    if (requiredSkills.length === 0 && relatedSkills.length > 0) {
+      // Use top 5 related skills as pseudo-required
+      requiredSkills = relatedSkills.slice(0, 5);
+    }
+
+    const allSkillsRequired = taskAnalysis.all_skills_required || false;
     const complexity = taskAnalysis.complexity || "medium";
 
     // Skill relationship mapping for fuzzy matching

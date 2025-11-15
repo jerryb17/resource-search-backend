@@ -148,6 +148,90 @@ app.post("/api/resources/:id/workload", (req, res) => {
   }
 });
 
+// Create a new task and assign it to a specific resource
+app.post("/api/resources/:id/assign-task", (req, res) => {
+  try {
+    const resourceId = parseInt(req.params.id);
+    const {
+      title,
+      description,
+      priority = "medium",
+      estimated_hours = 40,
+      deadline,
+      department,
+      complexity = "medium",
+    } = req.body;
+
+    if (!title || !description) {
+      return res.status(400).json({
+        success: false,
+        error: "Title and description are required",
+      });
+    }
+
+    const resource = resources.find((r) => r.id === resourceId);
+    if (!resource) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Resource not found" });
+    }
+
+    // Generate new task ID
+    const newTaskId =
+      tasks.length > 0 ? Math.max(...tasks.map((t) => t.id)) + 1 : 1;
+
+    const taskDepartment = department || resource.department || "Engineering";
+    const taskDeadline =
+      deadline ||
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10); // default +7 days
+
+    const newTask = {
+      id: newTaskId,
+      title,
+      description,
+      priority,
+      status: "assigned",
+      required_skills: [],
+      estimated_hours,
+      deadline: taskDeadline,
+      assigned_resource: resourceId,
+      department: taskDepartment,
+      complexity,
+    };
+
+    tasks.push(newTask);
+
+    // Update workload similar to /tasks/:taskId/assign
+    const hoursPerWeek = 40;
+    const workloadIncrease = ((estimated_hours || 40) / hoursPerWeek) * 100;
+
+    resource.current_workload = Math.min(
+      resource.current_workload + workloadIncrease,
+      100
+    );
+    resource.current_workload = Math.round(resource.current_workload * 10) / 10;
+
+    // Update availability
+    resource.availability =
+      resource.current_workload >= 80 ? "busy" : "available";
+
+    // Track assigned tasks on resource
+    if (!resource.assigned_tasks) {
+      resource.assigned_tasks = [];
+    }
+    resource.assigned_tasks.push(newTaskId);
+
+    return res.json({
+      success: true,
+      task: newTask,
+      resource,
+      message: `Task "${title}" created and assigned to ${resource.name}. Workload updated to ${resource.current_workload}%`,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Get all tasks with optional filtering
 app.get("/api/tasks", (req, res) => {
   try {
