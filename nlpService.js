@@ -88,7 +88,6 @@ export class NLPService {
       "ai",
       "nlp",
       "data science",
-      "devops",
       "frontend",
       "backend",
       "full stack",
@@ -100,6 +99,17 @@ export class NLPService {
       ".net",
       "asp.net",
     ];
+
+    // Department keywords (these are NOT skills; handle separately)
+    this.departmentKeywords = new Map([
+      ["engineering", "Engineering"],
+      ["devops", "DevOps"],
+      ["dev ops", "DevOps"],
+      ["data", "Data"],
+      ["design", "Design"],
+      ["marketing", "Marketing"],
+      ["security", "Security"],
+    ]);
   }
 
   /**
@@ -150,13 +160,24 @@ export class NLPService {
       availability: null,
       expertise_level: null,
       specializations: [],
+      department: null,
       all_skills_required: false,
       min_experience_years: null,
       experience_inclusive: true,
     };
 
+    // Extract department (DevOps/Engineering/etc.)
+    for (const [keyword, dept] of this.departmentKeywords.entries()) {
+      if (commandLower.includes(keyword)) {
+        parsed.department = dept;
+        break;
+      }
+    }
+
     // Extract skills
     for (const skill of this.commonSkills) {
+      // Avoid treating department words as skills
+      if (this.departmentKeywords.has(skill)) continue;
       if (commandLower.includes(skill)) {
         parsed.skills.push(skill);
       }
@@ -368,6 +389,14 @@ export class NLPService {
   filterCandidates(parsedQuery) {
     let filtered = [...this.resources];
 
+    if (parsedQuery.department) {
+      filtered = filtered.filter(
+        (r) =>
+          String(r.department || "").toLowerCase() ===
+          String(parsedQuery.department).toLowerCase()
+      );
+    }
+
     if (parsedQuery.availability) {
       filtered = filtered.filter(
         (r) => r.availability === parsedQuery.availability
@@ -433,6 +462,7 @@ export class NLPService {
     // If no filtered results, only fall back to all candidates when there were no explicit hard constraints.
     // This avoids returning under-qualified matches for queries like "more than 10 years of experience".
     const hasHardConstraints =
+      !!parsed.department ||
       !!parsed.availability ||
       !!parsed.expertise_level ||
       (parsed.min_experience_years !== null &&
