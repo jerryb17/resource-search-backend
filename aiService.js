@@ -78,6 +78,8 @@ Extract and return JSON with these fields:
 6. priority: "low", "medium", "high", or "critical"
 7. estimated_hours: 10-200
 8. key_requirements: Brief summary
+9. min_experience_years: number or null (e.g. for "more than 10 years", set 10)
+10. experience_inclusive: boolean (true if "at least/10+", false if "more than/over/above")
 
 **EXAMPLES:**
 
@@ -90,7 +92,9 @@ Query: "Find me a React and Python developer"
   "complexity": "medium",
   "priority": "medium",
   "estimated_hours": 40,
-  "key_requirements": "Full stack developer with React and Python"
+  "key_requirements": "Full stack developer with React and Python",
+  "min_experience_years": null,
+  "experience_inclusive": true
 }
 
 Query: "Find me an Angular and .NET developer"  
@@ -138,7 +142,9 @@ Query: "Find me a React or Python developer"
   "complexity": "medium",
   "priority": "medium",
   "estimated_hours": 40,
-  "key_requirements": "Developer with React or Python skills"
+  "key_requirements": "Developer with React or Python skills",
+  "min_experience_years": null,
+  "experience_inclusive": true
 }
 
 Return ONLY valid JSON, no other text.`;
@@ -166,6 +172,22 @@ Return ONLY valid JSON, no other text.`;
         parsed.related_skills = Array.isArray(parsed.related_skills)
           ? parsed.related_skills
           : [];
+
+        // Normalize experience constraints
+        parsed.min_experience_years =
+          parsed.min_experience_years === null ||
+          parsed.min_experience_years === undefined ||
+          parsed.min_experience_years === ""
+            ? null
+            : Number(parsed.min_experience_years);
+        if (!Number.isFinite(parsed.min_experience_years)) {
+          parsed.min_experience_years = null;
+        }
+        parsed.experience_inclusive =
+          parsed.experience_inclusive === undefined ||
+          parsed.experience_inclusive === null
+            ? true
+            : !!parsed.experience_inclusive;
 
         // If Gemini put backend skills only in related_skills (e.g. for "Backend engineer"),
         // promote a subset of those into required_skills so matching and UI can use them.
@@ -301,6 +323,24 @@ Return ONLY valid JSON, no other text.`;
       priority = "low";
     }
 
+    // Experience constraint detection (simple heuristic)
+    const parseExp = (t) => {
+      let m = t.match(/(\d+)\s*\+\s*(?:years?|yrs?)\b/);
+      if (m) return { minYears: Number(m[1]), inclusive: true };
+      m = t.match(/\b(?:at\s+least|minimum|min)\s*(\d+)\s*(?:years?|yrs?)\b/);
+      if (m) return { minYears: Number(m[1]), inclusive: true };
+      m = t.match(/\b(?:>=|=>)\s*(\d+)\s*(?:years?|yrs?)\b/);
+      if (m) return { minYears: Number(m[1]), inclusive: true };
+      m = t.match(/\b(?:more\s+than|over|above)\s*(\d+)\s*(?:years?|yrs?)\b/);
+      if (m) return { minYears: Number(m[1]), inclusive: false };
+      m = t.match(/\b>\s*(\d+)\s*(?:years?|yrs?)\b/);
+      if (m) return { minYears: Number(m[1]), inclusive: false };
+      m = t.match(/\b(\d+)\s*(?:years?|yrs?)\s*(?:of\s*)?experience\b/);
+      if (m) return { minYears: Number(m[1]), inclusive: true };
+      return null;
+    };
+    const exp = parseExp(text);
+
     return {
       required_skills:
         detectedSkills.length > 0 ? detectedSkills : ["General Development"],
@@ -312,6 +352,8 @@ Return ONLY valid JSON, no other text.`;
       estimated_hours:
         complexity === "high" ? 80 : complexity === "low" ? 20 : 40,
       key_requirements: title || "Task analysis",
+      min_experience_years: exp ? exp.minYears : null,
+      experience_inclusive: exp ? exp.inclusive : true,
     };
   }
 
@@ -329,6 +371,16 @@ Return ONLY valid JSON, no other text.`;
     );
 
     let allSkillsRequired = taskAnalysis.all_skills_required || false;
+    const minExperienceYears =
+      taskAnalysis.min_experience_years === null ||
+      taskAnalysis.min_experience_years === undefined
+        ? null
+        : Number(taskAnalysis.min_experience_years);
+    const experienceInclusive =
+      taskAnalysis.experience_inclusive === undefined ||
+      taskAnalysis.experience_inclusive === null
+        ? true
+        : !!taskAnalysis.experience_inclusive;
 
     // Fallback: if AI did not return required_skills but did return related_skills,
     // treat a subset of related_skills as required so we can still rank meaningfully.
@@ -398,6 +450,22 @@ Return ONLY valid JSON, no other text.`;
     for (const resource of resources) {
       let score = 0;
       const reasons = [];
+
+      // Experience hard constraint (if specified)
+      if (Number.isFinite(minExperienceYears) && minExperienceYears !== null) {
+        const years = Number(resource.experience_years);
+        const meets = Number.isFinite(years)
+          ? experienceInclusive
+            ? years >= minExperienceYears
+            : years > minExperienceYears
+          : false;
+        if (!meets) {
+          continue;
+        }
+        reasons.push(
+          `${resource.experience_years} years experience meets requirement`
+        );
+      }
 
       // Normalize resource skills
       const resourceSkillsNormalized = new Set();
